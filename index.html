@@ -176,12 +176,13 @@ sndRoleta.mozPreservesPitch = false;
 sndRoleta.webkitPreservesPitch = false;
 const sndGanhou = new Audio("sons/ganhou.mp3"); sndGanhou.preload = "auto"; sndGanhou.volume = 0.9;
 const sndNaoFoi = new Audio("sons/naofoi.mp3"); sndNaoFoi.preload = "auto"; sndNaoFoi.volume = 0.9;
+const sndNovamente = new Audio("sons/novamente.mp3"); sndNovamente.preload = "auto"; sndNovamente.volume = 0.9;
 
 let audioUnlocked = false;
 function unlockAudio() {
   if (audioUnlocked) return;
   audioUnlocked = true;
-  [sndGanhou, sndNaoFoi].forEach(a => {
+  [sndGanhou, sndNaoFoi, sndNovamente].forEach(a => {
     a.muted = true;
     const p = a.play();
     if (p) p.then(() => { a.pause(); a.currentTime = 0; a.muted = false; })
@@ -189,14 +190,14 @@ function unlockAudio() {
   });
 }
 function pararRoletaSom() {
-  // fade rápido e pausa, pra terminar junto com a roleta
+  // corte rápido (~36ms) pra o som não arrastar depois da roleta parar
   const v0 = sndRoleta.volume;
   let k = 0;
   const id = setInterval(() => {
     k++;
-    sndRoleta.volume = Math.max(0, v0 * (1 - k / 6));
-    if (k >= 6) { clearInterval(id); sndRoleta.pause(); sndRoleta.currentTime = 0; sndRoleta.volume = v0; }
-  }, 25);
+    sndRoleta.volume = Math.max(0, v0 * (1 - k / 3));
+    if (k >= 3) { clearInterval(id); sndRoleta.pause(); sndRoleta.currentTime = 0; sndRoleta.volume = v0; }
+  }, 12);
 }
 
 function sortear() {
@@ -230,6 +231,7 @@ function girar() {
   const dur = 8200;                             // mais tempo girando
   const t0 = performance.now();
   const ease = t => 1 - Math.pow(1 - t, 5);     // desacelera bem devagar no fim (tensão)
+  let somParado = false;
 
   (function frame(now) {
     const t = Math.min(1, (now - t0) / dur);
@@ -238,15 +240,18 @@ function girar() {
     // o som do giro acompanha a velocidade: rápido no início, lento ao parar
     const norm = Math.pow(1 - t, 4);            // velocidade normalizada 1 -> 0
     sndRoleta.playbackRate = Math.max(0.3, 0.3 + norm);
+    // corta o som um tiquinho antes da roleta parar de fato
+    if (!somParado && t >= 0.97) { somParado = true; pararRoletaSom(); }
     if (t < 1) requestAnimationFrame(frame);
     else {
       rotation %= 360;
       spinning = false;
       spinHit.disabled = false;
-      pararRoletaSom();
+      if (!somParado) pararRoletaSom();
       const p = PREMIOS[idx];
-      if (p.perdeu) { sndNaoFoi.currentTime = 0; sndNaoFoi.play().catch(() => {}); }
-      else { sndGanhou.currentTime = 0; sndGanhou.play().catch(() => {}); }
+      if (p.novamente)    { sndNovamente.currentTime = 0; sndNovamente.play().catch(() => {}); }
+      else if (p.perdeu)  { sndNaoFoi.currentTime = 0;   sndNaoFoi.play().catch(() => {}); }
+      else                { sndGanhou.currentTime = 0;   sndGanhou.play().catch(() => {}); }
       mostrarResultado(idx);
     }
   })(performance.now());
