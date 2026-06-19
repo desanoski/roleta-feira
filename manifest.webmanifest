@@ -1,0 +1,19 @@
+{
+  "name": "Roleta de Prêmios",
+  "short_name": "Roleta",
+  "description": "Roleta de brindes para feira - funciona offline",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#0b1026",
+  "theme_color": "#0b1026",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

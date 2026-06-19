@@ -1,0 +1,27 @@
+COMO COLOCAR AS IMAGENS DOS PRÊMIOS
+====================================
+
+1) Salve cada imagem nesta pasta (img/).
+   Use PNG com fundo transparente de preferência (fica melhor na fatia).
+   Tamanho sugerido: 300x300 px.
+
+2) Abra o arquivo index.html e, lá no topo do <script>, no bloco PREMIOS,
+   troque o "img: null" pelo nome do arquivo. Exemplo:
+
+   { nome: "Boné", peso: 10, cor: "#90be6d", img: "bone.png" },
+
+3) Pronto. A fatia passa a mostrar a imagem no lugar do texto.
+   (Se deixar img: null, continua mostrando o nome escrito.)
+
+Sugestão de nomes (combine com o que está no PREMIOS):
+   pretinho5l.png
+   shine.png
+   airpro.png
+   pretinho2l.png
+   bone.png
+   copo.png
+   pincel.png
+   luva.png
+   pano.png
+   panoduplo.png
+   (o "Não foi dessa vez" não precisa de imagem)
