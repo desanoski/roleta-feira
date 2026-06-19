@@ -259,15 +259,15 @@ function girar() {
   const idx = sortear();                       // decide o prêmio (por %)
   // para o ponteiro (topo, 0°) bem na fatia sorteada:
   const ang = PREMIOS[idx].ang;
-  const voltas = 8 + Math.floor(Math.random() * 3);   // 8 a 10 voltas
+  const voltas = 9 + Math.floor(Math.random() * 3);   // 9 a 11 voltas
   const jitter = (Math.random() - 0.5) * 22;   // ±11° dentro da fatia (fatia = 30°)
   const base = Math.ceil(rotation / 360) * 360;
   const alvo = base + voltas * 360 + ((360 - ang) % 360) + jitter;
   const inicio = rotation;
   const delta = alvo - inicio;
-  const dur = 8200;                             // mais tempo girando
+  const dur = 11000;                            // gira por mais tempo
   const t0 = performance.now();
-  const ease = t => 1 - Math.pow(1 - t, 5);     // desacelera bem devagar no fim (tensão)
+  const ease = t => 1 - Math.pow(1 - t, 4);     // desaceleração mais gradual (aos poucos)
   let somParado = false;
 
   (function frame(now) {
@@ -275,7 +275,7 @@ function girar() {
     rotation = inicio + delta * ease(t);
     wheelEl.style.transform = `rotate(${rotation}deg)`;
     // o som do giro acompanha a velocidade: rápido no início, lento ao parar
-    const norm = Math.pow(1 - t, 4);            // velocidade normalizada 1 -> 0
+    const norm = Math.pow(1 - t, 3);            // velocidade ~ derivada do ease (1 -> 0)
     sndRoleta.playbackRate = Math.max(0.3, 0.3 + norm);
     // corta o som um tiquinho antes da roleta parar de fato
     if (!somParado && t >= 0.97) { somParado = true; pararRoletaSom(); }
