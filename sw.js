@@ -1,10 +1,11 @@
 /* Service Worker - cache total para funcionar 100% offline */
-const CACHE = "roleta-v10";
+const CACHE = "roleta-v11";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./icon.svg",
+  "./assets/instagram.png",
   "./sons/roleta.mp3",
   "./sons/ganhou.mp3",
   "./sons/naofoi.mp3",
