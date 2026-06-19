@@ -265,9 +265,9 @@ function girar() {
   const alvo = base + voltas * 360 + ((360 - ang) % 360) + jitter;
   const inicio = rotation;
   const delta = alvo - inicio;
-  const dur = 11000;                            // gira por mais tempo
+  const dur = 14000;                            // gira por bem mais tempo
   const t0 = performance.now();
-  const ease = t => 1 - Math.pow(1 - t, 4);     // desaceleração mais gradual (aos poucos)
+  const ease = t => 1 - Math.pow(1 - t, 4);     // desaceleração bem gradual (aos poucos)
   let somParado = false;
 
   (function frame(now) {
