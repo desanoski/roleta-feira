@@ -317,7 +317,7 @@ function mostrarResultado(idx) {
 function montarLista() {
   const ul = document.getElementById("probList");
   ul.innerHTML = "";
-  PREMIOS.forEach(p => {
+  [...PREMIOS].sort((a, b) => b.peso - a.peso).forEach(p => {
     const li = document.createElement("li");
     const pct = String(p.peso).replace(".", ",");
     li.innerHTML = `<span class="nm"><span class="dot" style="background:${p.cor}"></span>${p.nome}</span>`
