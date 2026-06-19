@@ -176,9 +176,9 @@ const sndNovamente = new Audio("sons/novamente.mp3"); sndNovamente.preload = "au
 
 /* Música tema (loop) com "ducking": abaixa no giro e nos outros sons */
 const sndTema = new Audio("sons/tema.mp3");
-sndTema.loop = true; sndTema.preload = "auto"; sndTema.volume = 0.32;
+sndTema.loop = true; sndTema.preload = "auto"; sndTema.volume = 0.25;
 sndTema.setAttribute("playsinline", "");
-const TEMA_CHEIO = 0.32, TEMA_BAIXO = 0.12;
+const TEMA_CHEIO = 0.25, TEMA_BAIXO = 0.12;
 let temaIniciado = false, fadeTemaId = null;
 function startTema() {
   if (temaIniciado) return;
@@ -259,13 +259,13 @@ function girar() {
   const idx = sortear();                       // decide o prêmio (por %)
   // para o ponteiro (topo, 0°) bem na fatia sorteada:
   const ang = PREMIOS[idx].ang;
-  const voltas = 9 + Math.floor(Math.random() * 3);   // 9 a 11 voltas
+  const voltas = 12 + Math.floor(Math.random() * 3);  // 12 a 14 voltas
   const jitter = (Math.random() - 0.5) * 22;   // ±11° dentro da fatia (fatia = 30°)
   const base = Math.ceil(rotation / 360) * 360;
   const alvo = base + voltas * 360 + ((360 - ang) % 360) + jitter;
   const inicio = rotation;
   const delta = alvo - inicio;
-  const dur = 14000;                            // gira por bem mais tempo
+  const dur = 20000;                            // gira por 20 segundos
   const t0 = performance.now();
   const ease = t => 1 - Math.pow(1 - t, 4);     // desaceleração bem gradual (aos poucos)
   let somParado = false;
