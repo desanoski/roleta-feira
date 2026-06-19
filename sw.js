@@ -1,5 +1,5 @@
 /* Service Worker - cache total para funcionar 100% offline */
-const CACHE = "roleta-v13";
+const CACHE = "roleta-v14";
 const ASSETS = [
   "./",
   "./index.html",
@@ -47,16 +47,33 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// Cache-first: serve do cache; cai pra rede só se não tiver.
-// Inclui as imagens da pasta img/ assim que forem usadas pela 1ª vez.
 self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return;
-  e.respondWith(
-    caches.match(e.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(e.request).then((resp) => {
+  const req = e.request;
+  if (req.method !== "GET") return;
+
+  const aceita = req.headers.get("accept") || "";
+  const ehHTML = req.mode === "navigate" || aceita.includes("text/html");
+
+  if (ehHTML) {
+    // Rede-primeiro para a página: online sempre pega a versão nova;
+    // offline cai para o cache.
+    e.respondWith(
+      fetch(req).then((resp) => {
         const copy = resp.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        return resp;
+      }).catch(() => caches.match(req).then((r) => r || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  // Resto (imagens, sons, etc.): cache-primeiro, cai pra rede se faltar.
+  e.respondWith(
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((resp) => {
+        const copy = resp.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
         return resp;
       }).catch(() => cached);
     })

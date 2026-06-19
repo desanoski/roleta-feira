@@ -176,8 +176,9 @@ const sndNovamente = new Audio("sons/novamente.mp3"); sndNovamente.preload = "au
 
 /* Música tema (loop) com "ducking": abaixa no giro e nos outros sons */
 const sndTema = new Audio("sons/tema.mp3");
-sndTema.loop = true; sndTema.preload = "auto"; sndTema.volume = 0.45;
-const TEMA_CHEIO = 0.45, TEMA_BAIXO = 0.12;
+sndTema.loop = true; sndTema.preload = "auto"; sndTema.volume = 0.32;
+sndTema.setAttribute("playsinline", "");
+const TEMA_CHEIO = 0.32, TEMA_BAIXO = 0.12;
 let temaIniciado = false, fadeTemaId = null;
 function startTema() {
   if (temaIniciado) return;
@@ -212,8 +213,17 @@ function unlockAudio() {
 // quando um som de resultado termina, a música volta ao volume cheio
 [sndGanhou, sndNaoFoi, sndNovamente].forEach(a =>
   a.addEventListener("ended", restaurarTema));
-// inicia a música no primeiro toque do usuário (exigência dos navegadores)
-window.addEventListener("pointerdown", startTema, { once: true });
+// inicia a música no primeiro toque do usuário (exigência dos navegadores).
+// tenta em vários tipos de evento e só remove os listeners quando conseguir tocar.
+function iniciarAudioGesto() {
+  startTema();
+  if (temaIniciado) {
+    ["pointerdown", "touchend", "click"].forEach(ev =>
+      window.removeEventListener(ev, iniciarAudioGesto));
+  }
+}
+["pointerdown", "touchend", "click"].forEach(ev =>
+  window.addEventListener(ev, iniciarAudioGesto));
 function pararRoletaSom() {
   // corte rápido (~36ms) pra o som não arrastar depois da roleta parar
   const v0 = sndRoleta.volume;
