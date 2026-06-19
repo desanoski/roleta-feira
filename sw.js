@@ -1,5 +1,5 @@
 /* Service Worker - cache total para funcionar 100% offline */
-const CACHE = "roleta-v9";
+const CACHE = "roleta-v10";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,9 @@ const ASSETS = [
   "./sons/ganhou.mp3",
   "./sons/naofoi.mp3",
   "./sons/novamente.mp3",
+  "./assets/resultado/ganhou.png",
+  "./assets/resultado/naofoi.png",
+  "./assets/resultado/novamente.png",
   "./assets/fundo.gif",
   "./assets/roleta.png",
   "./assets/marcas.png",

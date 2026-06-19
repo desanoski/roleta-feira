@@ -79,19 +79,19 @@
     background: #0b1026; color: #fff; border: none; border-radius: 999px;
     padding: 12px 44px; font-size: 22px; font-weight: 700; cursor: pointer;
   }
-  /* o resultado mantém botão grande e centralizado */
-  .result-card .btn-close { padding: 18px 70px; font-size: 32px; }
-
-  .result-card {
-    width: 760px; text-align: center; background: linear-gradient(180deg,#fff,#eef0ff);
-    color: #1a1f3c; border-radius: 32px; padding: 56px 48px; box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  /* Tela de resultado = imagem cheia (Você ganhou / Não foi / Gire novamente) */
+  #resultOverlay { background: rgba(4,7,20,.55); }
+  #resultProd {
+    position: absolute; left: 736px; top: 736px; width: 184px; height: 184px;
+    object-fit: contain; transform-origin: center center; display: none;
+    animation: rock 0.8s ease-in-out infinite; pointer-events: none;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
   }
-  .result-card .kicker { font-size: 40px; font-weight: 700; opacity: .7; }
-  .result-card .pimg { width: 360px; height: 360px; object-fit: contain; margin: 14px auto; display: none; }
-  .result-card .prize { margin: 8px 0 4px; font-size: 72px; font-weight: 900; color: #e10600; line-height: 1.05; }
-  .result-card.miss .prize { color: #5a6080; font-size: 60px; }
-  .result-card .emoji { font-size: 150px; line-height: 1; display: none; }
-  .result-card .btn-close { background: #e10600; margin-top: 22px; }
+  @keyframes rock {
+    0%   { transform: rotate(-23deg); }
+    50%  { transform: rotate(23deg); }
+    100% { transform: rotate(-23deg); }
+  }
 </style>
 </head>
 <body>
@@ -117,15 +117,10 @@
     </div>
   </div>
 
-  <!-- Resultado -->
+  <!-- Resultado (imagem cheia + produto à direita do texto) -->
   <div class="overlay" id="resultOverlay">
-    <div class="result-card" id="resultCard">
-      <div class="emoji" id="resEmoji">🙁</div>
-      <img class="pimg" id="resImg" src="" alt="" />
-      <div class="kicker" id="resKicker">Você ganhou</div>
-      <div class="prize" id="resPrize">—</div>
-      <div class="closebar"><button class="btn-close" data-close>Continuar</button></div>
-    </div>
+    <img class="layer" id="resultBg" src="" alt="" />
+    <img id="resultProd" src="" alt="" />
   </div>
 </div>
 
@@ -260,30 +255,18 @@ function girar() {
 /* ---------- Resultado ---------- */
 function mostrarResultado(idx) {
   const p = PREMIOS[idx];
-  const card = document.getElementById("resultCard");
-  const img = document.getElementById("resImg");
-  const emoji = document.getElementById("resEmoji");
+  const bg = document.getElementById("resultBg");
+  const prod = document.getElementById("resultProd");
   if (p.novamente) {
-    card.classList.add("miss");
-    img.style.display = "none";
-    emoji.style.display = "block";
-    emoji.textContent = "🔄";
-    document.getElementById("resKicker").textContent = "Boa!";
-    document.getElementById("resPrize").textContent = "Gire novamente";
+    bg.src = "assets/resultado/novamente.png";
+    prod.style.display = "none";
   } else if (p.perdeu) {
-    card.classList.add("miss");
-    img.style.display = "none";
-    emoji.style.display = "block";
-    emoji.textContent = "🙁";
-    document.getElementById("resKicker").textContent = "Que pena!";
-    document.getElementById("resPrize").textContent = "Não foi dessa vez";
+    bg.src = "assets/resultado/naofoi.png";
+    prod.style.display = "none";
   } else {
-    card.classList.remove("miss");
-    emoji.style.display = "none";
-    img.src = "img/" + p.img;
-    img.style.display = "block";
-    document.getElementById("resKicker").textContent = "Você ganhou";
-    document.getElementById("resPrize").textContent = p.nome;
+    bg.src = "assets/resultado/ganhou.png";
+    prod.src = "img/" + p.img;
+    prod.style.display = "block";
   }
   document.getElementById("resultOverlay").classList.add("show");
 }
@@ -312,6 +295,9 @@ document.querySelectorAll("[data-close]").forEach(b =>
   b.addEventListener("click", () => b.closest(".overlay").classList.remove("show")));
 document.querySelectorAll(".overlay").forEach(o =>
   o.addEventListener("click", e => { if (e.target === o) o.classList.remove("show"); }));
+// tela de resultado fecha tocando em qualquer lugar
+document.getElementById("resultOverlay").addEventListener("click", () =>
+  document.getElementById("resultOverlay").classList.remove("show"));
 
 /* ---------- Tela acesa ---------- */
 (async () => {
