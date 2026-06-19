@@ -167,31 +167,36 @@ const spinHit = document.getElementById("spinHit");
 let rotation = 0;
 let spinning = false;
 
-/* ---------- Som do giro (tic-tic sintetizado, sem arquivo) ---------- */
-const TICK_STEP = 15;          // toca um "tic" a cada 15° (24 pinos por volta)
-let actx = null;
-let lastTick = 0;
-function initAudio() {
-  if (!actx) {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (AC) actx = new AC();
-  }
-  if (actx && actx.state === "suspended") actx.resume();
+/* ---------- Sons (arquivos reais em sons/) ---------- */
+const sndRoleta = new Audio("sons/roleta.mp3");
+sndRoleta.loop = true; sndRoleta.preload = "auto"; sndRoleta.volume = 0.8;
+// deixa o tom cair junto com a velocidade ao desacelerar (mais realista)
+sndRoleta.preservesPitch = false;
+sndRoleta.mozPreservesPitch = false;
+sndRoleta.webkitPreservesPitch = false;
+const sndGanhou = new Audio("sons/ganhou.mp3"); sndGanhou.preload = "auto"; sndGanhou.volume = 0.9;
+const sndNaoFoi = new Audio("sons/naofoi.mp3"); sndNaoFoi.preload = "auto"; sndNaoFoi.volume = 0.9;
+
+let audioUnlocked = false;
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  [sndGanhou, sndNaoFoi].forEach(a => {
+    a.muted = true;
+    const p = a.play();
+    if (p) p.then(() => { a.pause(); a.currentTime = 0; a.muted = false; })
+           .catch(() => { a.muted = false; });
+  });
 }
-function playTick(velPorFrame) {
-  if (!actx) return;
-  const t = actx.currentTime;
-  const o = actx.createOscillator();
-  const g = actx.createGain();
-  o.type = "square";
-  // quanto mais rápida a roleta, mais agudo o tic
-  o.frequency.value = 760 + Math.min(700, Math.abs(velPorFrame) * 22);
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.28, t + 0.002);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
-  o.connect(g).connect(actx.destination);
-  o.start(t);
-  o.stop(t + 0.06);
+function pararRoletaSom() {
+  // fade rápido e pausa, pra terminar junto com a roleta
+  const v0 = sndRoleta.volume;
+  let k = 0;
+  const id = setInterval(() => {
+    k++;
+    sndRoleta.volume = Math.max(0, v0 * (1 - k / 6));
+    if (k >= 6) { clearInterval(id); sndRoleta.pause(); sndRoleta.currentTime = 0; sndRoleta.volume = v0; }
+  }, 25);
 }
 
 function sortear() {
@@ -208,7 +213,10 @@ function girar() {
   if (spinning) return;
   spinning = true;
   spinHit.disabled = true;
-  initAudio();                                 // libera o áudio no toque do usuário
+  unlockAudio();                               // libera o áudio no toque do usuário
+  sndGanhou.pause(); sndNaoFoi.pause();
+  sndRoleta.currentTime = 0; sndRoleta.volume = 0.8; sndRoleta.playbackRate = 1.3;
+  sndRoleta.play().catch(() => {});
 
   const idx = sortear();                       // decide o prêmio (por %)
   // para o ponteiro (topo, 0°) bem na fatia sorteada:
@@ -222,24 +230,23 @@ function girar() {
   const dur = 8200;                             // mais tempo girando
   const t0 = performance.now();
   const ease = t => 1 - Math.pow(1 - t, 5);     // desacelera bem devagar no fim (tensão)
-  lastTick = Math.floor(inicio / TICK_STEP);
 
   (function frame(now) {
     const t = Math.min(1, (now - t0) / dur);
-    const anterior = rotation;
     rotation = inicio + delta * ease(t);
     wheelEl.style.transform = `rotate(${rotation}deg)`;
-    // toca um tic a cada pino cruzado (acompanha a velocidade da roleta)
-    const idxTick = Math.floor(rotation / TICK_STEP);
-    if (idxTick !== lastTick) {
-      lastTick = idxTick;
-      playTick(rotation - anterior);
-    }
+    // o som do giro acompanha a velocidade: rápido no início, lento ao parar
+    const norm = Math.pow(1 - t, 4);            // velocidade normalizada 1 -> 0
+    sndRoleta.playbackRate = Math.max(0.3, 0.3 + norm);
     if (t < 1) requestAnimationFrame(frame);
     else {
       rotation %= 360;
       spinning = false;
       spinHit.disabled = false;
+      pararRoletaSom();
+      const p = PREMIOS[idx];
+      if (p.perdeu) { sndNaoFoi.currentTime = 0; sndNaoFoi.play().catch(() => {}); }
+      else { sndGanhou.currentTime = 0; sndGanhou.play().catch(() => {}); }
       mostrarResultado(idx);
     }
   })(performance.now());
