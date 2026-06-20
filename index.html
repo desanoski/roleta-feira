@@ -127,24 +127,27 @@
 
 <script>
 /* ============================================================
-   PRÊMIOS  —  peso = porcentagem (soma = 100)
+   PRÊMIOS
+     peso   = chance REAL no sorteio (soma = 100)
+     mostra = porcentagem EXIBIDA no painel "Probabilidades" (soma = 100)
+              — independente do sorteio, para o painel não mudar
    img = arquivo em img/  (null = sem imagem, ex.: "Não foi dessa vez")
    ============================================================ */
 /* ang = ângulo da fatia na arte (graus, horário a partir do topo).
-   A roleta tem 12 fatias de 30°. Os pesos somam 100. */
+   A roleta tem 12 fatias de 30°. */
 const PREMIOS = [
-  { nome: "Space Black 5L",          peso: 0.1,  ang: 330, cor: "#e63946", img: "pretinho5l.png" },
-  { nome: "Better Shine",            peso: 0.1,  ang: 90,  cor: "#f3722c", img: "shine.png" },
-  { nome: "Air Pro",                 peso: 0.1,  ang: 270, cor: "#f9844a", img: "airpro.png" },
-  { nome: "Space Black 2L",          peso: 1,    ang: 30,  cor: "#f9c74f", img: "pretinho2l.png" },
-  { nome: "Boné ALFA",               peso: 8,    ang: 150, cor: "#90be6d", img: "bone.png" },
-  { nome: "Copo ALFA",               peso: 8,    ang: 210, cor: "#43aa8b", img: "copo.png" },
-  { nome: "Pincel",                  peso: 10,   ang: 300, cor: "#4d908e", img: "pincel.png" },
-  { nome: "Luva Microfibra",         peso: 10,   ang: 240, cor: "#577590", img: "luva.png" },
-  { nome: "Pano Microfibra",         peso: 25,   ang: 60,  cor: "#277da1", img: "pano.png" },
-  { nome: "Pano Microfibra 2 Faces", peso: 10,   ang: 120, cor: "#6a4c93", img: "panoduplo.png" },
-  { nome: "Não foi dessa vez",       peso: 17,   ang: 180, cor: "#3a3f5c", img: null, perdeu: true },
-  { nome: "Gire novamente",          peso: 10.7, ang: 0,   cor: "#888",    img: null, novamente: true },
+  { nome: "Space Black 5L",          peso: 0.5,  mostra: 0.1,  ang: 330, cor: "#e63946", img: "pretinho5l.png" },
+  { nome: "Better Shine",            peso: 0.5,  mostra: 0.1,  ang: 90,  cor: "#f3722c", img: "shine.png" },
+  { nome: "Air Pro",                 peso: 0.5,  mostra: 0.1,  ang: 270, cor: "#f9844a", img: "airpro.png" },
+  { nome: "Space Black 2L",          peso: 3,    mostra: 1,    ang: 30,  cor: "#f9c74f", img: "pretinho2l.png" },
+  { nome: "Boné ALFA",               peso: 12,   mostra: 8,    ang: 150, cor: "#90be6d", img: "bone.png" },
+  { nome: "Copo ALFA",               peso: 12,   mostra: 8,    ang: 210, cor: "#43aa8b", img: "copo.png" },
+  { nome: "Pincel",                  peso: 14,   mostra: 10,   ang: 300, cor: "#4d908e", img: "pincel.png" },
+  { nome: "Luva Microfibra",         peso: 14,   mostra: 10,   ang: 240, cor: "#577590", img: "luva.png" },
+  { nome: "Pano Microfibra",         peso: 29.5, mostra: 25,   ang: 60,  cor: "#277da1", img: "pano.png" },
+  { nome: "Pano Microfibra 2 Faces", peso: 14,   mostra: 10,   ang: 120, cor: "#6a4c93", img: "panoduplo.png" },
+  { nome: "Não foi dessa vez",       peso: 0,    mostra: 17,   ang: 180, cor: "#3a3f5c", img: null, perdeu: true },
+  { nome: "Gire novamente",          peso: 0,    mostra: 10.7, ang: 0,   cor: "#888",    img: null, novamente: true },
 ];
 
 /* ---------- Escala do palco ---------- */
@@ -316,25 +319,26 @@ function girar() {
   const idx = sortear();                       // decide o prêmio (por %)
   // para o ponteiro (topo, 0°) bem na fatia sorteada:
   const ang = PREMIOS[idx].ang;
-  const voltas = 39 + Math.floor(Math.random() * 5);  // 39 a 43 voltas (giro bem veloz)
+  const voltas = 30 + Math.floor(Math.random() * 5);  // 30 a 34 voltas (giro mais calmo)
   const jitter = (Math.random() - 0.5) * 22;   // ±11° dentro da fatia (fatia = 30°)
   const base = Math.ceil(rotation / 360) * 360;
   const alvo = base + voltas * 360 + ((360 - ang) % 360) + jitter;
   const inicio = rotation;
   const delta = alvo - inicio;
-  const dur = 27000;                            // gira por 27 segundos
+  const dur = 20000;                            // gira por 20 segundos
   const t0 = performance.now();
   // Perfil de velocidade em fases graduais (sem saltos de velocidade):
-  //  fase 1 (~0–9s)  : pico de velocidade caindo suavemente até a de cruzeiro
-  //  fase 2 (~9–13s) : velocidade de cruzeiro constante
-  //  fase 3 (~13–21s): desaceleração longa até a velocidade de rastejo
-  //  fase 4 (últimos 6s): rastejo EXTREMAMENTE lento (~2 fatias) até quase
-  //                       parar, deixando dúvida de onde vai cravar
-  const tA = 9000 / dur;                        // fim da fase de pico
-  const tB = 13000 / dur;                       // fim da fase de cruzeiro
-  const tC = (dur - 6000) / dur;               // últimos 6s = rastejo extremo
-  const VHIGH = 2.6;                            // pico inicial (x da velocidade de cruzeiro)
-  const VLOW = 0.04;                            // velocidade do rastejo final (extremamente lenta)
+  //  fase 1 : pico de velocidade caindo suavemente até a de cruzeiro
+  //  fase 2 : velocidade de cruzeiro constante
+  //  fase 3 : desaceleração LONGA e gradual até a velocidade de rastejo
+  //  fase 4 (últimos 6s): rastejo EXTREMAMENTE lento até quase parar,
+  //                       deixando dúvida de onde vai cravar
+  const preTail = dur - 6000;                   // tempo antes do rastejo final (6s)
+  const tA = 0.40 * preTail / dur;             // fim da fase de pico (proporcional)
+  const tB = 0.55 * preTail / dur;             // fim da fase de cruzeiro (decel longa depois)
+  const tC = preTail / dur;                     // últimos 6s = rastejo extremo
+  const VHIGH = 1.8;                            // pico inicial (x da velocidade de cruzeiro)
+  const VLOW = 0.012;                           // velocidade do rastejo final (extremamente lenta)
   const CRAWL_K = 2.0;                          // >1 antecipa o "quase parando" do fim
   const PI = Math.PI, spanA = tA;
   // velocidade ao longo do giro (cruzeiro = 1):
@@ -412,9 +416,9 @@ function mostrarResultado(idx) {
 function montarLista() {
   const ul = document.getElementById("probList");
   ul.innerHTML = "";
-  [...PREMIOS].sort((a, b) => b.peso - a.peso).forEach(p => {
+  [...PREMIOS].sort((a, b) => (b.mostra ?? b.peso) - (a.mostra ?? a.peso)).forEach(p => {
     const li = document.createElement("li");
-    const pct = String(p.peso).replace(".", ",");
+    const pct = String(p.mostra ?? p.peso).replace(".", ",");
     li.innerHTML = `<span class="nm"><span class="dot" style="background:${p.cor}"></span>${p.nome}</span>`
                  + `<span class="pct">${pct}%</span>`;
     ul.appendChild(li);
@@ -422,8 +426,10 @@ function montarLista() {
 }
 
 /* ---------- Eventos ---------- */
-spinHit.addEventListener("click", girar);
-spinHit.addEventListener("pointerdown", () => botaoEl.classList.add("press"));
+// gira no instante em que encosta (pointerdown), sem exigir clique limpo —
+// assim funciona mesmo se a pessoa segurar/arrastar o dedo. O guard
+// "if (spinning) return" dentro de girar() evita disparo duplo.
+spinHit.addEventListener("pointerdown", () => { botaoEl.classList.add("press"); girar(); });
 ["pointerup", "pointerleave", "pointercancel"].forEach(ev =>
   spinHit.addEventListener(ev, () => botaoEl.classList.remove("press")));
 document.getElementById("probBtn").addEventListener("click", () =>
