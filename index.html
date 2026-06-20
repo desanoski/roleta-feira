@@ -178,7 +178,7 @@ const sndNovamente = new Audio("sons/novamente.mp3"); sndNovamente.preload = "au
 const sndTema = new Audio("sons/tema.mp3");
 sndTema.loop = true; sndTema.preload = "auto"; sndTema.volume = 0.25;
 sndTema.setAttribute("playsinline", "");
-const TEMA_CHEIO = 0.25, TEMA_BAIXO = 0.12;
+const TEMA_CHEIO = 0.25, TEMA_BAIXO = 0.07;
 let temaIniciado = false, fadeTemaId = null;
 function startTema() {
   ensureGraph();
@@ -263,7 +263,7 @@ function pararRoletaSom() {
 // Tique sincronizado do giro (Web Audio): um clique curto a cada fatia que
 // cruza o ponteiro. A cadência segue a roda — rápida no início e freando junto
 // com ela no fim, sem loop nem descompasso.
-const TICK_VOL = 3.0;                   // volume do tique (ajuste fino aqui)
+const TICK_VOL = 4.5;                   // volume do tique (ajuste fino aqui)
 const TICK_FREQ = 1800;                 // timbre do "tec" (Hz) — grave/agudo
 // buffer de ruído curto, reutilizado em cada tique
 let tickNoise = null;
