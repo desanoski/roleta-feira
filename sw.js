@@ -1,5 +1,5 @@
 /* Service Worker - cache total para funcionar 100% offline */
-const CACHE = "roleta-v19";
+const CACHE = "roleta-v20";
 const ASSETS = [
   "./",
   "./index.html",

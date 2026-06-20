@@ -181,6 +181,7 @@ sndTema.setAttribute("playsinline", "");
 const TEMA_CHEIO = 0.25, TEMA_BAIXO = 0.12;
 let temaIniciado = false, fadeTemaId = null;
 function startTema() {
+  ensureGraph();
   if (temaIniciado) return;
   temaIniciado = true;
   sndTema.volume = TEMA_CHEIO;
@@ -199,8 +200,32 @@ function fadeTema(alvo, ms) {
 function abaixarTema() { if (temaIniciado) fadeTema(TEMA_BAIXO, 250); }
 function restaurarTema() { if (temaIniciado) fadeTema(TEMA_CHEIO, 600); }
 
+/* Amplificação via Web Audio: GainNode passa de 1.0, deixando os sons
+   muito mais altos (todos os volumes do app x BOOST). */
+const BOOST = 5;
+let actx = null, grafoPronto = false;
+function ensureGraph() {
+  if (actx) { if (actx.state === "suspended") actx.resume(); return; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;                       // sem Web Audio: usa o volume normal
+  actx = new AC();
+  if (!grafoPronto) {
+    grafoPronto = true;
+    [sndRoleta, sndGanhou, sndNaoFoi, sndNovamente, sndTema].forEach(a => {
+      try {
+        const src = actx.createMediaElementSource(a);
+        const g = actx.createGain();
+        g.gain.value = BOOST;
+        src.connect(g); g.connect(actx.destination);
+      } catch (e) {}
+    });
+  }
+  if (actx.state === "suspended") actx.resume();
+}
+
 let audioUnlocked = false;
 function unlockAudio() {
+  ensureGraph();
   if (audioUnlocked) return;
   audioUnlocked = true;
   [sndGanhou, sndNaoFoi, sndNovamente].forEach(a => {
