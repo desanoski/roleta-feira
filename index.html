@@ -324,30 +324,44 @@ function girar() {
   const delta = alvo - inicio;
   const dur = 27000;                            // gira por 27 segundos
   const t0 = performance.now();
-  // Perfil de velocidade em 3 fases graduais (sem saltos de velocidade),
-  // proporcional ao tempo total (~37% pico, ~25% cruzeiro, ~38% freada):
-  //  fase 1 (~0–10s) : pico de velocidade caindo suavemente até a de cruzeiro
-  //  fase 2 (~10–17s): velocidade de cruzeiro constante
-  //  fase 3 (~17–27s): desaceleração suave até parar
-  const tA = 15 / 40;                           // fim da fase de pico (proporção)
-  const tB = 25 / 40;                           // fim da fase de cruzeiro (proporção)
+  // Perfil de velocidade em fases graduais (sem saltos de velocidade):
+  //  fase 1 (~0–9s)  : pico de velocidade caindo suavemente até a de cruzeiro
+  //  fase 2 (~9–13s) : velocidade de cruzeiro constante
+  //  fase 3 (~13–21s): desaceleração longa até a velocidade de rastejo
+  //  fase 4 (últimos 6s): rastejo EXTREMAMENTE lento (~2 fatias) até quase
+  //                       parar, deixando dúvida de onde vai cravar
+  const tA = 9000 / dur;                        // fim da fase de pico
+  const tB = 13000 / dur;                       // fim da fase de cruzeiro
+  const tC = (dur - 6000) / dur;               // últimos 6s = rastejo extremo
   const VHIGH = 2.6;                            // pico inicial (x da velocidade de cruzeiro)
-  const PI = Math.PI, spanA = tA, spanC = 1 - tB;
-  const dA = 0.5 * (1 + VHIGH) * spanA;         // área (distância) da fase de pico
-  const dB = tB - tA;                           // área da fase de cruzeiro
-  const dC = 0.5 * spanC;                       // área da freada
-  const DTOT = dA + dB + dC;
-  const ease = t => {
-    let d;
-    if (t <= tA) {                              // pico -> cruzeiro (cosseno suave)
-      d = t + (VHIGH - 1) * 0.5 * (t + (spanA / PI) * Math.sin(PI * t / spanA));
-    } else if (t <= tB) {                       // cruzeiro (velocidade constante)
-      d = dA + (t - tA);
-    } else {                                    // cruzeiro -> parada (cosseno suave)
-      const w = t - tB;
-      d = dA + dB + 0.5 * (w + (spanC / PI) * Math.sin(PI * w / spanC));
+  const VLOW = 0.04;                            // velocidade do rastejo final (extremamente lenta)
+  const CRAWL_K = 2.0;                          // >1 antecipa o "quase parando" do fim
+  const PI = Math.PI, spanA = tA;
+  // velocidade ao longo do giro (cruzeiro = 1):
+  const vprofile = t => {
+    if (t <= tA) return 1 + (VHIGH - 1) * 0.5 * (1 + Math.cos(PI * t / spanA)); // pico -> cruzeiro
+    if (t <= tB) return 1;                                                      // cruzeiro
+    if (t <= tC) {                              // cruzeiro -> rastejo (desaceleração longa)
+      const p = (t - tB) / (tC - tB);
+      return VLOW + (1 - VLOW) * 0.5 * (1 + Math.cos(PI * p));
     }
-    return d / DTOT;
+    const q = (t - tC) / (1 - tC);              // rastejo final: lento até quase parar
+    return VLOW * Math.pow(0.5 * (1 + Math.cos(PI * q)), CRAWL_K);
+  };
+  // integra a velocidade uma vez para mapear tempo -> fração de rotação,
+  // garantindo que pare exatamente na fatia sorteada.
+  const NS = 1440, cum = new Float64Array(NS + 1);
+  let acc = 0;
+  for (let i = 1; i <= NS; i++) {
+    acc += 0.5 * (vprofile((i - 1) / NS) + vprofile(i / NS)) / NS;  // trapézio
+    cum[i] = acc;
+  }
+  const TOTAL = cum[NS];
+  const ease = t => {
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    const x = t * NS, i = Math.floor(x), f = x - i;
+    return (cum[i] + (cum[i + 1] - cum[i]) * f) / TOTAL;
   };
   // tique do giro: um clique a cada fatia que cruza o ponteiro. A cadência
   // segue a roda sozinha (rápida nos 25s, freando junto no fim).
