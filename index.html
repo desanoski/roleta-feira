@@ -263,7 +263,7 @@ function pararRoletaSom() {
 // Tique sincronizado do giro (Web Audio): um clique curto a cada fatia que
 // cruza o ponteiro. A cadência segue a roda — rápida no início e freando junto
 // com ela no fim, sem loop nem descompasso.
-const TICK_VOL = 9.0;                   // volume do tique (ajuste fino aqui)
+const TICK_VOL = 27.0;                  // volume do tique (ajuste fino aqui)
 const TICK_FREQ = 1800;                 // timbre do "tec" (Hz) — grave/agudo
 // buffer de ruído curto, reutilizado em cada tique
 let tickNoise = null;
@@ -322,14 +322,15 @@ function girar() {
   const alvo = base + voltas * 360 + ((360 - ang) % 360) + jitter;
   const inicio = rotation;
   const delta = alvo - inicio;
-  const dur = 40000;                            // gira por 40 segundos
+  const dur = 27000;                            // gira por 27 segundos
   const t0 = performance.now();
-  // Perfil de velocidade em 3 fases graduais (sem saltos de velocidade):
-  //  0–15s : pico de velocidade caindo suavemente até a de cruzeiro
-  //  15–25s: velocidade de cruzeiro constante
-  //  25–40s: desaceleração suave até parar
-  const tA = 15 / 40;                           // fim da fase de pico
-  const tB = 25 / 40;                           // fim da fase de cruzeiro
+  // Perfil de velocidade em 3 fases graduais (sem saltos de velocidade),
+  // proporcional ao tempo total (~37% pico, ~25% cruzeiro, ~38% freada):
+  //  fase 1 (~0–10s) : pico de velocidade caindo suavemente até a de cruzeiro
+  //  fase 2 (~10–17s): velocidade de cruzeiro constante
+  //  fase 3 (~17–27s): desaceleração suave até parar
+  const tA = 15 / 40;                           // fim da fase de pico (proporção)
+  const tB = 25 / 40;                           // fim da fase de cruzeiro (proporção)
   const VHIGH = 2.6;                            // pico inicial (x da velocidade de cruzeiro)
   const PI = Math.PI, spanA = tA, spanC = 1 - tB;
   const dA = 0.5 * (1 + VHIGH) * spanA;         // área (distância) da fase de pico
